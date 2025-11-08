@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/services/attendance_service.dart';
 import '../../data/services/device_service.dart';
@@ -7,7 +8,7 @@ import '../../features/sync/sync_service.dart';
 import '../../data/models/pending_log.dart';
 import '../../core/constants.dart';
 
-enum KioskStatus { ready, lookingAtCamera, capturing, verifying, success, failure, idle }
+enum KioskStatus { ready, verifying, success, failure, idle }
 
 class KioskState {
   final KioskStatus status;
@@ -63,29 +64,15 @@ class KioskController extends StateNotifier<KioskState> {
     this._isOnline,
   ) : super(KioskState(status: KioskStatus.ready));
 
-  Future<void> verifyAttendance(String employeeId, dynamic capturedImage) async {
+  Future<void> verifyAttendance(String employeeId, Uint8List? capturedImage) async {
     if (_isProcessing) return;
     _isProcessing = true;
 
     try {
-      // Step 1: Show "Look at camera" message
-      state = state.copyWith(
-        status: KioskStatus.lookingAtCamera,
-        message: 'Please look at the camera',
-      );
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Step 2: Capturing photo
-      state = state.copyWith(
-        status: KioskStatus.capturing,
-        message: 'Smile! 📸',
-      );
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // Step 3: Verifying
+      // Start verifying immediately
       state = state.copyWith(
         status: KioskStatus.verifying,
-        message: 'Verifying your attendance...',
+        message: null,
       );
 
       final deviceId = await _deviceService.getStoredDeviceId();

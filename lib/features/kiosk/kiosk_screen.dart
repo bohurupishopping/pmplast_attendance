@@ -18,10 +18,15 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
   @override
   void initState() {
     super.initState();
+    _initScanner();
+  }
+
+  void _initScanner() {
     _scannerController = MobileScannerController(
-      detectionSpeed: DetectionSpeed.noDuplicates,
+      detectionSpeed: DetectionSpeed.normal,
       facing: CameraFacing.front,
-      returnImage: true, // Enable image capture
+      returnImage: true,
+      autoStart: true,
     );
   }
 
@@ -35,17 +40,18 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
     _scannerController.switchCamera();
   }
 
-  void _startScanning() {
-    setState(() {
-      _isScanning = true;
-    });
-    ref.read(kioskControllerProvider.notifier).resetToReady();
-  }
-
   void _pauseScanning() {
     setState(() {
       _isScanning = false;
     });
+  }
+
+  void _restartForNextScan() {
+    // Simply reset the scanning flag - don't dispose controller
+    setState(() {
+      _isScanning = true;
+    });
+    ref.read(kioskControllerProvider.notifier).resetToReady();
   }
 
   @override
@@ -64,14 +70,13 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
               if (state.status == KioskStatus.ready && _isScanning) {
                 final barcodes = capture.barcodes;
                 if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-                  // Capture data before pausing
                   final employeeId = barcodes.first.rawValue!;
                   final imageBytes = capture.image;
                   
-                  // Pause scanning immediately to prevent duplicate scans
+                  // Pause scanning immediately
                   _pauseScanning();
                   
-                  // Start verification process with captured image
+                  // Start verification instantly
                   ref.read(kioskControllerProvider.notifier).verifyAttendance(
                     employeeId,
                     imageBytes,
@@ -197,28 +202,6 @@ Row(
                 ),
               ),
             ),
-          if (state.status == KioskStatus.lookingAtCamera)
-            const Column(
-              children: [
-                Icon(Icons.visibility, size: 80, color: Colors.white),
-                SizedBox(height: 16),
-                Text(
-                  'Look at the camera',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-              ],
-            ),
-          if (state.status == KioskStatus.capturing)
-            const Column(
-              children: [
-                Icon(Icons.camera_alt, size: 80, color: Colors.white),
-                SizedBox(height: 16),
-                Text(
-                  '📸 Smile!',
-                  style: TextStyle(color: Colors.white, fontSize: 24),
-                ),
-              ],
-            ),
           if (state.status == KioskStatus.verifying)
             const Column(
               children: [
@@ -261,7 +244,9 @@ Row(
             ),
             const SizedBox(height: 48),
             ElevatedButton(
-              onPressed: _startScanning,
+              onPressed: () {
+                _restartForNextScan();
+              },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 48,
@@ -323,12 +308,8 @@ Row(
     switch (status) {
       case KioskStatus.ready:
         return 'Please scan your QR code';
-      case KioskStatus.lookingAtCamera:
-        return 'Please look at the camera';
-      case KioskStatus.capturing:
-        return 'Smile! 📸';
       case KioskStatus.verifying:
-        return 'Verifying your attendance...';
+        return 'Verifying...';
       case KioskStatus.success:
       case KioskStatus.failure:
       case KioskStatus.idle:
