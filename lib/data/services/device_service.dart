@@ -57,12 +57,24 @@ class DeviceService {
     required double latitude,
     required double longitude,
   }) async {
-    await _supabase.from('devices').insert({
-      'device_name': deviceName,
-      'device_unique_id': deviceUniqueId,
-      'is_active': true,
-      'location': 'POINT($longitude $latitude)',
-    }).select().single();
+    try {
+      // Try PostGIS geography format first
+      await _supabase.from('devices').insert({
+        'device_name': deviceName,
+        'device_unique_id': deviceUniqueId,
+        'is_active': true,
+        'location': 'SRID=4326;POINT($longitude $latitude)',
+      }).select().single();
+    } catch (e) {
+      // Fallback: use simple lat/lng columns if geography type not available
+      await _supabase.from('devices').insert({
+        'device_name': deviceName,
+        'device_unique_id': deviceUniqueId,
+        'is_active': true,
+        'latitude': latitude,
+        'longitude': longitude,
+      }).select().single();
+    }
 
     await saveDeviceId(deviceUniqueId);
   }
