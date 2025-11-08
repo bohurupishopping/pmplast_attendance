@@ -34,6 +34,15 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
     _scannerController.switchCamera();
   }
 
+  void _startScanning() {
+    _scannerController.start();
+    ref.read(kioskControllerProvider.notifier).resetToReady();
+  }
+
+  void _stopScanning() {
+    _scannerController.stop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(kioskControllerProvider);
@@ -51,6 +60,9 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
                 final barcodes = capture.barcodes;
                 if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
                   final employeeId = barcodes.first.rawValue!;
+                  
+                  // Stop scanning immediately to prevent duplicate scans
+                  _stopScanning();
                   
                   // Capture image from the scanner (already Uint8List)
                   final imageBytes = capture.image;
@@ -72,8 +84,9 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
   }
 
   Widget _buildOverlay(BuildContext context, KioskState state, bool isOnline) {
-    // If idle, show start button
+    // If idle, show start button and stop scanner
     if (state.status == KioskStatus.idle) {
+      _stopScanning();
       return _buildIdleScreen(context);
     }
 
@@ -244,9 +257,7 @@ Row(
             ),
             const SizedBox(height: 48),
             ElevatedButton(
-              onPressed: () {
-                ref.read(kioskControllerProvider.notifier).resetToReady();
-              },
+              onPressed: _startScanning,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 48,
