@@ -20,6 +20,7 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
     _scannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.noDuplicates,
       facing: CameraFacing.front,
+      returnImage: true, // Enable image capture
     );
   }
 
@@ -51,12 +52,12 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
                 if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
                   final employeeId = barcodes.first.rawValue!;
                   
-                  // Capture image from the scanner
-                  final image = capture.image;
+                  // Capture image from the scanner (already Uint8List)
+                  final imageBytes = capture.image;
                   
                   ref.read(kioskControllerProvider.notifier).verifyAttendance(
                     employeeId,
-                    image,
+                    imageBytes,
                   );
                 }
               }

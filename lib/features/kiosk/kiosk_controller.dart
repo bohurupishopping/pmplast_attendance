@@ -81,7 +81,7 @@ class KioskController extends StateNotifier<KioskState> {
       final position = await _locationService.getCurrentPosition();
       
       if (capturedImage == null) {
-        throw Exception('Failed to capture photo');
+        throw Exception('No photo captured. Please try again.');
       }
 
       final compressedImage = await _attendanceService.compressImage(capturedImage);
