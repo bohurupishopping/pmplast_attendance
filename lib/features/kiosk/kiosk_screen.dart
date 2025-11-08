@@ -72,6 +72,11 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
   }
 
   Widget _buildOverlay(BuildContext context, KioskState state, bool isOnline) {
+    // If idle, show start button
+    if (state.status == KioskStatus.idle) {
+      return _buildIdleScreen(context);
+    }
+
     return SafeArea(
       child: Column(
         children: [
@@ -175,13 +180,86 @@ Row(
                 ),
               ),
             ),
+          if (state.status == KioskStatus.lookingAtCamera)
+            const Column(
+              children: [
+                Icon(Icons.visibility, size: 80, color: Colors.white),
+                SizedBox(height: 16),
+                Text(
+                  'Look at the camera',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              ],
+            ),
+          if (state.status == KioskStatus.capturing)
+            const Column(
+              children: [
+                Icon(Icons.camera_alt, size: 80, color: Colors.white),
+                SizedBox(height: 16),
+                Text(
+                  '📸 Smile!',
+                  style: TextStyle(color: Colors.white, fontSize: 24),
+                ),
+              ],
+            ),
           if (state.status == KioskStatus.verifying)
-            const CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 4,
+            const Column(
+              children: [
+                CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 4,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Verifying...',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
+              ],
             ),
           const Spacer(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildIdleScreen(BuildContext context) {
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.qr_code_scanner_rounded,
+              size: 120,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Ready to scan',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+            ),
+            const SizedBox(height: 48),
+            ElevatedButton(
+              onPressed: () {
+                ref.read(kioskControllerProvider.notifier).resetToReady();
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 48,
+                  vertical: 20,
+                ),
+              ),
+              child: const Text(
+                'Start Scan',
+                style: TextStyle(fontSize: 20),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -230,10 +308,15 @@ Row(
     switch (status) {
       case KioskStatus.ready:
         return 'Please scan your QR code';
+      case KioskStatus.lookingAtCamera:
+        return 'Please look at the camera';
+      case KioskStatus.capturing:
+        return 'Smile! 📸';
       case KioskStatus.verifying:
-        return 'Verifying... Please look at the camera';
+        return 'Verifying your attendance...';
       case KioskStatus.success:
       case KioskStatus.failure:
+      case KioskStatus.idle:
         return '';
     }
   }

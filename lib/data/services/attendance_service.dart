@@ -33,13 +33,27 @@ class AttendanceService {
     
     if (image == null) throw Exception('Failed to decode image');
 
-    if (image.width > AppConstants.imageMaxWidth) {
-      image = img.copyResize(image, width: AppConstants.imageMaxWidth);
+    // Resize to smaller dimensions for better compression
+    int targetWidth = 400;
+    if (image.width > targetWidth) {
+      image = img.copyResize(image, width: targetWidth);
     }
 
-    return Uint8List.fromList(
-      img.encodeJpg(image, quality: AppConstants.imageQuality),
+    // Compress to JPG format with target size under 10KB
+    int quality = 60;
+    Uint8List compressed = Uint8List.fromList(
+      img.encodeJpg(image, quality: quality),
     );
+
+    // If still too large, reduce quality further
+    while (compressed.length > 10240 && quality > 10) {
+      quality -= 10;
+      compressed = Uint8List.fromList(
+        img.encodeJpg(image, quality: quality),
+      );
+    }
+
+    return compressed;
   }
 
   Future<String> uploadPhoto(Uint8List imageBytes) async {

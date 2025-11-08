@@ -7,7 +7,7 @@ import '../../features/sync/sync_service.dart';
 import '../../data/models/pending_log.dart';
 import '../../core/constants.dart';
 
-enum KioskStatus { ready, verifying, success, failure }
+enum KioskStatus { ready, lookingAtCamera, capturing, verifying, success, failure, idle }
 
 class KioskState {
   final KioskStatus status;
@@ -67,12 +67,27 @@ class KioskController extends StateNotifier<KioskState> {
     if (_isProcessing) return;
     _isProcessing = true;
 
-    state = state.copyWith(
-      status: KioskStatus.verifying,
-      message: null,
-    );
-
     try {
+      // Step 1: Show "Look at camera" message
+      state = state.copyWith(
+        status: KioskStatus.lookingAtCamera,
+        message: 'Please look at the camera',
+      );
+      await Future.delayed(const Duration(seconds: 2));
+
+      // Step 2: Capturing photo
+      state = state.copyWith(
+        status: KioskStatus.capturing,
+        message: 'Smile! 📸',
+      );
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Step 3: Verifying
+      state = state.copyWith(
+        status: KioskStatus.verifying,
+        message: 'Verifying your attendance...',
+      );
+
       final deviceId = await _deviceService.getStoredDeviceId();
       if (deviceId == null) {
         throw Exception('Device not registered');
@@ -121,7 +136,7 @@ class KioskController extends StateNotifier<KioskState> {
       }
 
       await Future.delayed(AppConstants.feedbackDisplayDuration);
-      state = state.copyWith(status: KioskStatus.ready);
+      state = state.copyWith(status: KioskStatus.idle);
       
     } catch (e) {
       state = state.copyWith(
@@ -130,9 +145,13 @@ class KioskController extends StateNotifier<KioskState> {
       );
 
       await Future.delayed(AppConstants.feedbackDisplayDuration);
-      state = state.copyWith(status: KioskStatus.ready);
+      state = state.copyWith(status: KioskStatus.idle);
     } finally {
       _isProcessing = false;
     }
+  }
+
+  void resetToReady() {
+    state = state.copyWith(status: KioskStatus.ready);
   }
 }
