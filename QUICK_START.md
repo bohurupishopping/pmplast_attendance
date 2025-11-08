@@ -37,7 +37,7 @@ class SupabaseConfig {
 ## 3️⃣ **Test on Web** (1 min)
 
 ```bash
-cd pmplast_attendance
+cd pmplast_kiosk
 
 # Get dependencies
 flutter pub get

@@ -58,7 +58,7 @@ Start here based on your need:
 ## 🗂️ Project Structure
 
 ```
-pmplast_attendance/
+pmplast_kiosk/
 │
 ├── 📄 Documentation Files (READ THESE FIRST!)
 │   ├── INDEX.md                      ← You are here

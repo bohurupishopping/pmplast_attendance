@@ -1,4 +1,4 @@
-package com.bohurupi.pmplast_attendance
+package com.bohurupi.pmplast_kiosk
 
 import io.flutter.embedding.android.FlutterActivity
 
