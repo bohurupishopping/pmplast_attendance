@@ -12,10 +12,16 @@ class KioskScreen extends ConsumerStatefulWidget {
 }
 
 class _KioskScreenState extends ConsumerState<KioskScreen> {
-  final MobileScannerController _scannerController = MobileScannerController(
-    detectionSpeed: DetectionSpeed.noDuplicates,
-    facing: CameraFacing.front,
-  );
+  late MobileScannerController _scannerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.noDuplicates,
+      facing: CameraFacing.front,
+    );
+  }
 
   @override
   void dispose() {
@@ -23,22 +29,35 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
     super.dispose();
   }
 
+  void _switchCamera() {
+    _scannerController.switchCamera();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(kioskControllerProvider);
     final isOnline = ref.watch(isOnlineProvider);
+
+
 
     return Scaffold(
       body: Stack(
         children: [
           MobileScanner(
             controller: _scannerController,
-            onDetect: (capture) {
+            onDetect: (capture) async {
               if (state.status == KioskStatus.ready) {
                 final barcodes = capture.barcodes;
                 if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
                   final employeeId = barcodes.first.rawValue!;
-                  ref.read(kioskControllerProvider.notifier).verifyAttendance(employeeId);
+                  
+                  // Capture image from the scanner
+                  final image = capture.image;
+                  
+                  ref.read(kioskControllerProvider.notifier).verifyAttendance(
+                    employeeId,
+                    image,
+                  );
                 }
               }
             },
@@ -70,7 +89,7 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
             ),
             child: Column(
               children: [
-                Row(
+Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
@@ -81,34 +100,47 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isOnline ? Colors.green : Colors.orange,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isOnline ? Icons.cloud_done : Icons.cloud_off,
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: _switchCamera,
+                          icon: const Icon(
+                            Icons.flip_camera_android,
                             color: Colors.white,
-                            size: 16,
+                            size: 28,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            isOnline ? 'Online' : 'Offline',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
                           ),
-                        ],
-                      ),
+                          decoration: BoxDecoration(
+                            color: isOnline ? Colors.green : Colors.orange,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isOnline ? Icons.cloud_done : Icons.cloud_off,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isOnline ? 'Online' : 'Offline',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

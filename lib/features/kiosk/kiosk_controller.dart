@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:camera/camera.dart';
 import '../../data/services/attendance_service.dart';
 import '../../data/services/device_service.dart';
 import '../../data/services/location_service.dart';
@@ -54,7 +53,6 @@ class KioskController extends StateNotifier<KioskState> {
   final SyncService _syncService;
   final bool _isOnline;
   
-  CameraController? _cameraController;
   bool _isProcessing = false;
 
   KioskController(
@@ -63,36 +61,9 @@ class KioskController extends StateNotifier<KioskState> {
     this._locationService,
     this._syncService,
     this._isOnline,
-  ) : super(KioskState(status: KioskStatus.ready)) {
-    _initCamera();
-  }
+  ) : super(KioskState(status: KioskStatus.ready));
 
-  Future<void> _initCamera() async {
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) return;
-
-      final frontCamera = cameras.firstWhere(
-        (camera) => camera.lensDirection == CameraLensDirection.front,
-        orElse: () => cameras.first,
-      );
-
-      _cameraController = CameraController(
-        frontCamera,
-        ResolutionPreset.medium,
-        enableAudio: false,
-      );
-
-      await _cameraController?.initialize();
-    } catch (e) {
-      state = state.copyWith(
-        status: KioskStatus.failure,
-        message: 'Camera initialization failed',
-      );
-    }
-  }
-
-  Future<void> verifyAttendance(String employeeId) async {
+  Future<void> verifyAttendance(String employeeId, dynamic capturedImage) async {
     if (_isProcessing) return;
     _isProcessing = true;
 
@@ -109,17 +80,11 @@ class KioskController extends StateNotifier<KioskState> {
 
       final position = await _locationService.getCurrentPosition();
       
-      dynamic imageData;
-      if (_cameraController != null && _cameraController!.value.isInitialized) {
-        final xFile = await _cameraController!.takePicture();
-        imageData = await xFile.readAsBytes();
-      }
-
-      if (imageData == null) {
+      if (capturedImage == null) {
         throw Exception('Failed to capture photo');
       }
 
-      final compressedImage = await _attendanceService.compressImage(imageData);
+      final compressedImage = await _attendanceService.compressImage(capturedImage);
 
       if (_isOnline) {
         final photoUrl = await _attendanceService.uploadPhoto(compressedImage);
@@ -169,11 +134,5 @@ class KioskController extends StateNotifier<KioskState> {
     } finally {
       _isProcessing = false;
     }
-  }
-
-  @override
-  void dispose() {
-    _cameraController?.dispose();
-    super.dispose();
   }
 }
