@@ -13,6 +13,7 @@ class KioskScreen extends ConsumerStatefulWidget {
 
 class _KioskScreenState extends ConsumerState<KioskScreen> {
   late MobileScannerController _scannerController;
+  bool _isScanning = true;
 
   @override
   void initState() {
@@ -35,12 +36,16 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
   }
 
   void _startScanning() {
-    _scannerController.start();
+    setState(() {
+      _isScanning = true;
+    });
     ref.read(kioskControllerProvider.notifier).resetToReady();
   }
 
-  void _stopScanning() {
-    _scannerController.stop();
+  void _pauseScanning() {
+    setState(() {
+      _isScanning = false;
+    });
   }
 
   @override
@@ -56,17 +61,17 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
           MobileScanner(
             controller: _scannerController,
             onDetect: (capture) async {
-              if (state.status == KioskStatus.ready) {
+              if (state.status == KioskStatus.ready && _isScanning) {
                 final barcodes = capture.barcodes;
                 if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+                  // Capture data before pausing
                   final employeeId = barcodes.first.rawValue!;
-                  
-                  // Stop scanning immediately to prevent duplicate scans
-                  _stopScanning();
-                  
-                  // Capture image from the scanner (already Uint8List)
                   final imageBytes = capture.image;
                   
+                  // Pause scanning immediately to prevent duplicate scans
+                  _pauseScanning();
+                  
+                  // Start verification process with captured image
                   ref.read(kioskControllerProvider.notifier).verifyAttendance(
                     employeeId,
                     imageBytes,
@@ -84,9 +89,8 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
   }
 
   Widget _buildOverlay(BuildContext context, KioskState state, bool isOnline) {
-    // If idle, show start button and stop scanner
+    // If idle, show start button
     if (state.status == KioskStatus.idle) {
-      _stopScanning();
       return _buildIdleScreen(context);
     }
 
