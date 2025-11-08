@@ -126,16 +126,47 @@ class KioskController extends StateNotifier<KioskState> {
       state = state.copyWith(status: KioskStatus.idle);
       
     } catch (e) {
+      // Parse error message to show user-friendly text
+      String errorMessage = _parseErrorMessage(e.toString());
+      
       state = state.copyWith(
         status: KioskStatus.failure,
-        message: e.toString(),
+        message: errorMessage,
       );
 
-      await Future.delayed(AppConstants.feedbackDisplayDuration);
+      await Future.delayed(const Duration(seconds: 5)); // Longer for error messages
       state = state.copyWith(status: KioskStatus.idle);
     } finally {
       _isProcessing = false;
     }
+  }
+
+  String _parseErrorMessage(String error) {
+    // Check for specific error patterns
+    if (error.contains('Employee not found') || error.contains('is inactive')) {
+      return 'Employee not found or inactive.\nPlease contact admin.';
+    }
+    
+    if (error.contains('Location verification failed') || 
+        error.contains('not at the registered office location') ||
+        error.contains('meters from office')) {
+      return 'Location verification failed.\nYou are too far from office.';
+    }
+    
+    if (error.contains('Device not registered') || error.contains('Device is not registered')) {
+      return 'Device not registered.\nPlease contact admin.';
+    }
+    
+    if (error.contains('No photo captured')) {
+      return 'Photo capture failed.\nPlease try again.';
+    }
+    
+    if (error.contains('Location permission')) {
+      return 'Location permission denied.\nPlease enable GPS.';
+    }
+    
+    // Default error message
+    return 'Verification failed.\nPlease try again or contact admin.';
   }
 
   void resetToReady() {
