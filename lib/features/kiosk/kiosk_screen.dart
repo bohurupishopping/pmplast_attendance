@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'kiosk_controller.dart';
 import '../../core/constants.dart';
+import '../../data/providers/connectivity_provider.dart';
 
 class KioskScreen extends ConsumerStatefulWidget {
   const KioskScreen({super.key});
@@ -318,6 +319,4 @@ Row(
   }
 }
 
-final isOnlineProvider = Provider<bool>((ref) {
-  return true;
-});
+
