@@ -1,7 +1,7 @@
 name: pmplast_kiosk
-description: "A new Flutter project."
+description: "Kiosk for attendence system"
 publish_to: 'none'
-version: 0.1.0
+version: 0.2.32+5
 
 environment:
   sdk: ^3.8.1
