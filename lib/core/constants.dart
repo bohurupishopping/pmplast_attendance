@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String appName = 'PMPLAST KIOSK';
+  static const String appName = 'PM-Plast Kiosk';
   static const String deviceIdKey = 'device_unique_id';
   static const String pendingLogsBoxName = 'pending_logs';
   

@@ -17,7 +17,7 @@
     <uses-feature android:name="android.hardware.location.gps" android:required="true"/>
     
     <application
-        android:label="PMPLAST KIOSK"
+        android:label="PM-Plast Kiosk"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">

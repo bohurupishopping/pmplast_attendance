@@ -1,7 +1,7 @@
 class SupabaseConfig {
   static const String url = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://v3-pmplast.nojor.de',
+    defaultValue: 'https://api-pmplst.nojor.de',
   );
   
   static const String anonKey = String.fromEnvironment(
